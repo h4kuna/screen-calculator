@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Screen dimension</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" media="all" rel="stylesheet" />
+		<style type="text/css">
+			div.body {
+				margin: 5% 20%;
+				width: 60%;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="body">
+			<h1 class="text-center">Screen Dimensions Calculator</h1>
+			<form class="container">
+				<div class="row">
+					<div class="form-group col-md-4">
+						<label for="select-pixel">Pixel size</label>
+						<select id="select-pixel" class="form-control">
+							<option>-</option>
+							<option value="800x600">800×600</option>
+							<option value="1024x800">1024×800</option>
+							<option value="1280x1024">1280×1024</option>
+							<option value="1920x1080">FullHD</option>
+							<option value="3840x2160">4K</option>
+							<option value="7680x4320">8K</option>
+							<option value="10000x7000">IMAX</option>
+						</select>
+					</div>
+					<div class="form-group col-md-4">
+						<label for="pixel-width">Width [px]</label>
+						<input id="pixel-width" class="form-control" type="number">
+					</div>
+					<div class="form-group col-md-4">
+						<label for="pixel-height">Height [px]</label>
+						<input id="pixel-height" class="form-control" type="number">
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-4">
+						<p>Optional size [cm]</p>
+					</div>
+					<div class="form-group col-md-4">
+						<label for="cm-width">Width [cm]</label>
+						<input id="cm-width" class="form-control" type="number">
+					</div>
+					<div class="form-group col-md-4">
+						<label for="cm-height">Height [cm]</label>
+						<input id="cm-height" class="form-control" type="number">
+					</div>
+				</div>
+				<div class="row">
+					<div class="form-group col-md-6">
+						<label for="diagonal-in">Diagonal [in]</label>
+						<input id="diagonal-in" class="form-control" autocomplete="off" type="number">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="diagonal-cm">Diagonal [cm]</label>
+						<input id="diagonal-cm" class="form-control" type="number">
+					</div>
+				</div>
+				<div class="row hide">
+					<div class="form-group col-md-12">
+						<input class="btn btn-primary" id="calculate" type="submit" value="Calculate">
+						<input class="btn btn-default" type="reset" value="Reset">
+					</div>
+				</div>
+			</form>
+			<div class="container calculate">
+				<div class="row">
+					<h3>Result</h3>
+					<p>Width: <span id="width-in"></span></p>
+					<p>Height: <span id="height-in"></span></p>
+					<p>Diagonal: <span id="diagonal-sum-in"></span></p>
+					<p>Pixel: <span id="pixel-in"></span></p>
+					<p>PPI: <span id="pixel-per-in"></span></p>
+					<p>Unit: <select id="select-result"></select></p>
+				</div>
+			</div>
+		</div>
+		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script>
+			var Dimensions = function () {
+				this._units = {
+					mm: this.MM = 0.001, // milimetr
+					cm: this.CM = 0.01, // centimetr
+					m: this.M = 1, // metr
+					'in': this.IN = 0.0254 // inch
+				};
+			};
+			Dimensions.prototype.setWidthPx = function (width) {
+				this._widthPx = width;
+				return this;
+			};
+			Dimensions.prototype.setHeightPx = function (height) {
+				this._heightPx = height;
+				return this;
+			};
+			Dimensions.prototype.getWidthPx = function () {
+				return this._widthPx;
+			};
+			Dimensions.prototype.getHeightPx = function () {
+				return this._heightPx;
+			};
+			Dimensions.prototype.setWidth = function (width, unit) {
+				this._widthM = width * this.getUnit(unit);
+				return this;
+			};
+			Dimensions.prototype.setHeight = function (height, unit) {
+				this._heightM = height * this.getUnit(unit);
+				return this;
+			};
+			Dimensions.prototype.getWidth = function (unit) {
+				return this._toZero(this._widthM / this.getUnit(unit));
+			};
+			Dimensions.prototype.getHeight = function (unit) {
+				return this._toZero(this._heightM / this.getUnit(unit));
+			};
+			Dimensions.prototype.getDiagonal = function (unit) {
+				return this._toZero(this.hypotenuse(this.getWidth(unit), this.getHeight(unit)));
+			};
+			Dimensions.prototype.hypotenuse = function (width, height) {
+				return Math.pow(Math.pow(width, 2) + Math.pow(height, 2), 0.5);
+			};
+			Dimensions.prototype.setDiagonal = function (value, unit) {
+				var ratio = value / this.hypotenuse(this._widthPx, this._heightPx);
+				this.setHeight(this._heightPx * ratio, unit);
+				this.setWidth(this._widthPx * ratio, unit);
+				return this;
+			};
+			Dimensions.prototype.getUnit = function (unit) {
+				return unit || this.CM;
+			};
+			Dimensions.prototype._toZero = function (value) {
+				return isNaN(value) ? 0 : value;
+			};
+			Dimensions.prototype.getAllowedUnits = function () {
+				return this._units;
+			};
+			Dimensions.prototype.getUnitName = function (unit) {
+				for(var name in this._units) {
+					if(this._units[name] == unit) {
+						return name;
+					}
+				}
+				return ;
+			};
+
+			function round(num, index) {
+				if (!index) {
+					return Math.round(num);
+				}
+				var delta = Math.pow(10, index);
+				return Math.round(num * delta) / delta;
+			}
+
+			function toFloat(value) {
+				if (typeof value === 'string') {
+					return parseFloat(value.replace(',', '.'));
+				}
+				return value;
+			}
+
+			function fill(element, value) {
+				if (value && element.val() != value) {
+					element.val(round(value, 2));
+				}
+			}
+
+			function resultFill($element, value, unitStr, roundPoint) {
+				var _round = roundPoint || 2;
+				$element.text(round(value, _round) + ' ' + unitStr);
+			}
+
+			function renderUnits(dimensions) {
+				var unit = $('#select-result').val();
+				var unitStr = dimensions.getUnitName(unit);
+				resultFill($('#width-in'), dimensions.getWidth(unit), unitStr);
+				resultFill($('#height-in'), dimensions.getHeight(unit), unitStr);
+				resultFill($('#pixel-in'), dimensions.getHeight(unit) / dimensions.getHeightPx(), unitStr);
+				resultFill($('#diagonal-sum-in'), dimensions.getDiagonal(unit), unitStr);
+			}
+
+			function render(dimensions) {
+				renderUnits(dimensions);
+				var heightInch = dimensions.getHeight(dimensions.IN);
+				$('#pixel-per-in').text(round(heightInch ? dimensions.getHeightPx() / heightInch : 0));
+			}
+
+			function selectUnit($element, dimensions) {
+				var units = dimensions.getAllowedUnits();
+				for (var u in units) {
+					$element.append($('<option>').text('[' + u + ']').val(units[u]));
+				}
+				$element.val(dimensions.getUnit());
+			}
+
+			$(function () {
+				var width = screen.width;
+				var height = screen.height;
+				var $pixelWidth = $('#pixel-width');
+				var $pixelHeight = $('#pixel-height');
+				var pixelValue = width + 'x' + height;
+				var $pixelSelect = $('#select-pixel');
+				var $diagonalIn = $('#diagonal-in');
+				var $diagonalCm = $('#diagonal-cm');
+				var $cmWidth = $('#cm-width');
+				var $cmHeight = $('#cm-height');
+				var $submit = $('#calculate');
+				var $selectResult = $('#select-result');
+				var dimensions = new Dimensions();
+
+				selectUnit($selectResult, dimensions);
+
+				$selectResult.on('change', function() {
+					renderUnits(dimensions);
+				});
+
+				$pixelWidth.on('keyup', function () {
+					dimensions.setWidthPx($pixelWidth.val());
+					$submit.trigger('click');
+				});
+
+				$pixelHeight.on('keyup', function () {
+					dimensions.setHeightPx($pixelHeight.val());
+					$submit.trigger('click');
+				});
+
+				$pixelSelect.on('change', function () {
+					var dimension = this.value.split('x');
+					dimensions.setWidthPx(dimension[0]).setHeightPx(dimension[1]);
+					$submit.trigger('click');
+				});
+
+				$diagonalIn.on('keyup', function () {
+					dimensions.setDiagonal(toFloat(this.value), dimensions.IN);
+					$submit.trigger('click');
+				});
+
+				$cmWidth.on('keyup', function () {
+					dimensions.setWidth(toFloat(this.value));
+					$submit.trigger('click');
+				});
+
+				$cmHeight.on('keyup', function () {
+					dimensions.setHeight(toFloat(this.value));
+					$submit.trigger('click');
+				});
+
+				$diagonalCm.on('keyup', function () {
+					dimensions.setDiagonal(toFloat(this.value));
+					$submit.trigger('click');
+				});
+
+				$submit.on('click', function (e) {
+					e.preventDefault();
+					$pixelHeight.val(dimensions.getHeightPx());
+					$pixelWidth.val(dimensions.getWidthPx());
+					fill($cmHeight, dimensions.getHeight());
+					fill($cmWidth, dimensions.getWidth());
+					fill($diagonalCm, dimensions.getDiagonal());
+					fill($diagonalIn, dimensions.getDiagonal(dimensions.IN));
+					render(dimensions);
+				});
+
+				if (!!$pixelSelect.val(pixelValue)) {
+					$pixelSelect.trigger('change');
+					$diagonalIn.focus();
+				} else {
+					$pixelWidth.focus();
+				}
+			});
+		</script>
+	</body>
+</html>
