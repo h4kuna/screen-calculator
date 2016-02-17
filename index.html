@@ -83,7 +83,8 @@
 		</div>
 		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 		<script>
-			var Dimensions = function () {
+			var Dimensions = function (width, height) {
+				this.setWidthPx(width).setHeightPx(height);
 				this._units = {
 					mm: this.MM = 0.001, // milimetr
 					cm: this.CM = 0.01, // centimetr
@@ -92,11 +93,17 @@
 				};
 			};
 			Dimensions.prototype.setWidthPx = function (width) {
-				this._widthPx = width;
+				if (this._widthPx != width) {
+					this._widthPx = width;
+					this._diagonalRefresh();
+				}
 				return this;
 			};
 			Dimensions.prototype.setHeightPx = function (height) {
-				this._heightPx = height;
+				if (this._heightPx != height) {
+					this._heightPx = height;
+					this._diagonalRefresh();
+				}
 				return this;
 			};
 			Dimensions.prototype.getWidthPx = function () {
@@ -134,19 +141,25 @@
 			Dimensions.prototype.getUnit = function (unit) {
 				return unit || this.CM;
 			};
-			Dimensions.prototype._toZero = function (value) {
-				return isNaN(value) ? 0 : value;
-			};
 			Dimensions.prototype.getAllowedUnits = function () {
 				return this._units;
 			};
 			Dimensions.prototype.getUnitName = function (unit) {
-				for(var name in this._units) {
-					if(this._units[name] == unit) {
+				for (var name in this._units) {
+					if (this._units[name] == unit) {
 						return name;
 					}
 				}
-				return ;
+				return;
+			};
+			Dimensions.prototype._toZero = function (value) {
+				return isNaN(value) ? 0 : value;
+			};
+			Dimensions.prototype._diagonalRefresh = function () {
+				var diagonal = this.getDiagonal(this.M);
+				if (diagonal) {
+					this.setDiagonal(diagonal, this.M);
+				}
 			};
 
 			function round(num, index) {
@@ -165,8 +178,9 @@
 			}
 
 			function fill(element, value) {
-				if (value && element.val() != value) {
-					element.val(round(value, 2));
+				var roundValue = round(value, 2);
+				if (value && element.val() != roundValue) {
+					element.val(roundValue);
 				}
 			}
 
@@ -211,11 +225,11 @@
 				var $cmHeight = $('#cm-height');
 				var $submit = $('#calculate');
 				var $selectResult = $('#select-result');
-				var dimensions = new Dimensions();
+				var dimensions = new Dimensions(width, height);
 
 				selectUnit($selectResult, dimensions);
 
-				$selectResult.on('change', function() {
+				$selectResult.on('change', function () {
 					renderUnits(dimensions);
 				});
 
@@ -257,8 +271,8 @@
 
 				$submit.on('click', function (e) {
 					e.preventDefault();
-					$pixelHeight.val(dimensions.getHeightPx());
-					$pixelWidth.val(dimensions.getWidthPx());
+					fill($pixelHeight, dimensions.getHeightPx());
+					fill($pixelWidth, dimensions.getWidthPx());
 					fill($cmHeight, dimensions.getHeight());
 					fill($cmWidth, dimensions.getWidth());
 					fill($diagonalCm, dimensions.getDiagonal());
@@ -266,12 +280,12 @@
 					render(dimensions);
 				});
 
-				if (!!$pixelSelect.val(pixelValue)) {
+				if ($pixelSelect.val(pixelValue).val() == pixelValue) {
 					$pixelSelect.trigger('change');
-					$diagonalIn.focus();
 				} else {
-					$pixelWidth.focus();
+					$submit.trigger('click');
 				}
+				$diagonalIn.focus();
 			});
 		</script>
 	</body>
