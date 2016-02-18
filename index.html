@@ -72,6 +72,8 @@
 			<div class="container calculate">
 				<div class="row">
 					<h3>Result</h3>
+					<p>Width: <span id="width-px"></span> px</p>
+					<p>Height: <span id="height-px"></span> px</p>
 					<p>Width: <span id="width-in"></span></p>
 					<p>Height: <span id="height-in"></span></p>
 					<p>Diagonal: <span id="diagonal-sum-in"></span></p>
@@ -201,6 +203,8 @@
 			function render(dimensions) {
 				renderUnits(dimensions);
 				var heightInch = dimensions.getHeight(dimensions.IN);
+				$('#height-px').text(dimensions.getHeightPx());
+				$('#width-px').text(dimensions.getWidthPx());
 				$('#pixel-per-in').text(round(heightInch ? dimensions.getHeightPx() / heightInch : 0));
 			}
 
