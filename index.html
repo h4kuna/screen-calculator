@@ -10,6 +10,9 @@
 				margin: 5% 20%;
 				width: 60%;
 			}
+			h1 {
+				margin-bottom: 1em;
+			}
 		</style>
 	</head>
 	<body>
@@ -31,12 +34,12 @@
 						</select>
 					</div>
 					<div class="form-group col-md-4">
-						<label for="pixel-width">Width [px]</label>
-						<input id="pixel-width" class="form-control" type="number">
+						<label for="width-px">Width [px]</label>
+						<input id="width-px" class="form-control" type="number">
 					</div>
 					<div class="form-group col-md-4">
-						<label for="pixel-height">Height [px]</label>
-						<input id="pixel-height" class="form-control" type="number">
+						<label for="height-px">Height [px]</label>
+						<input id="height-px" class="form-control" type="number">
 					</div>
 				</div>
 				<div class="row">
@@ -44,12 +47,12 @@
 						<p>Optional size [cm]</p>
 					</div>
 					<div class="form-group col-md-4">
-						<label for="cm-width">Width [cm]</label>
-						<input id="cm-width" class="form-control" type="number">
+						<label for="width-cm">Width [cm]</label>
+						<input id="width-cm" class="form-control" type="number">
 					</div>
 					<div class="form-group col-md-4">
-						<label for="cm-height">Height [cm]</label>
-						<input id="cm-height" class="form-control" type="number">
+						<label for="height-cm">Height [cm]</label>
+						<input id="height-cm" class="form-control" type="number">
 					</div>
 				</div>
 				<div class="row">
@@ -62,22 +65,16 @@
 						<input id="diagonal-cm" class="form-control" type="number">
 					</div>
 				</div>
-				<div class="row hide">
-					<div class="form-group col-md-12">
-						<input class="btn btn-primary" id="calculate" type="submit" value="Calculate">
-						<input class="btn btn-default" type="reset" value="Reset">
-					</div>
-				</div>
 			</form>
 			<div class="container calculate">
 				<div class="row">
-					<h3>Result</h3>
-					<p>Width: <span id="width-px"></span> px</p>
-					<p>Height: <span id="height-px"></span> px</p>
-					<p>Width: <span id="width-in"></span></p>
-					<p>Height: <span id="height-in"></span></p>
-					<p>Diagonal: <span id="diagonal-sum-in"></span></p>
-					<p>Pixel: <span id="pixel-in"></span></p>
+					<h3>Results</h3>
+					<p>Width: <span id="width-out-px"></span> px</p>
+					<p>Height: <span id="height-out-px"></span> px</p>
+					<p>Width: <span id="width-out"></span></p>
+					<p>Height: <span id="height-out"></span></p>
+					<p>Diagonal: <span id="diagonal-out"></span></p>
+					<p>Pixel: <span id="pixel-out"></span></p>
 					<p>PPI: <span id="pixel-per-in"></span></p>
 					<p>Unit: <select id="select-result"></select></p>
 				</div>
@@ -155,6 +152,9 @@
 				}
 				return;
 			};
+			Dimensions.prototype.getResolution = function () {
+				return this.getWidthPx() + 'x' + this.getHeightPx();
+			}
 			Dimensions.prototype._toZero = function (value) {
 				return isNaN(value) ? 0 : value;
 			};
@@ -180,117 +180,141 @@
 				return value;
 			}
 
-			function fill(element, value) {
-				var roundValue = round(value, 2);
-				if (value && element.val() != roundValue) {
-					element.val(roundValue);
-				}
-			}
-
-			function resultFill($element, value, unitStr, roundPoint) {
-				var _round = roundPoint || 2;
-				$element.text(round(value, _round) + ' ' + unitStr);
-			}
-
-			function renderUnits(dimensions) {
-				var unit = $('#select-result').val();
-				var unitStr = dimensions.getUnitName(unit);
-				resultFill($('#width-in'), dimensions.getWidth(unit), unitStr);
-				resultFill($('#height-in'), dimensions.getHeight(unit), unitStr);
-				resultFill($('#pixel-in'), dimensions.getHeight(unit) / dimensions.getHeightPx(), unitStr);
-				resultFill($('#diagonal-sum-in'), dimensions.getDiagonal(unit), unitStr);
-			}
-
-			function render(dimensions) {
-				renderUnits(dimensions);
-				var heightInch = dimensions.getHeight(dimensions.IN);
-				$('#height-px').text(dimensions.getHeightPx());
-				$('#width-px').text(dimensions.getWidthPx());
-				$('#pixel-per-in').text(round(heightInch ? dimensions.getHeightPx() / heightInch : 0));
-			}
-
-			function selectUnit($element, dimensions) {
-				var units = dimensions.getAllowedUnits();
-				for (var u in units) {
-					$element.append($('<option>').text('[' + u + ']').val(units[u]));
-				}
-				$element.val(dimensions.getUnit());
-			}
-
 			$(function () {
-				var width = screen.width;
-				var height = screen.height;
-				var $pixelWidth = $('#pixel-width');
-				var $pixelHeight = $('#pixel-height');
-				var pixelValue = width + 'x' + height;
-				var $pixelSelect = $('#select-pixel');
-				var $diagonalIn = $('#diagonal-in');
-				var $diagonalCm = $('#diagonal-cm');
-				var $cmWidth = $('#cm-width');
-				var $cmHeight = $('#cm-height');
-				var $submit = $('#calculate');
+				var dom = {
+					inputs: {
+						widthPx: $('#width-px'),
+						heightPx: $('#height-px'),
+						diagonalIn: $('#diagonal-in'),
+						diagonalCm: $('#diagonal-cm'),
+						widthCm: $('#width-cm'),
+						heightCm: $('#height-cm')
+					},
+					results: {
+						static: {
+							widthPx: $('#width-out-px'),
+							heightPx: $('#height-out-px'),
+							ppi: $('#pixel-per-in')
+						},
+						dynamic: {
+							width: $('#width-out'),
+							height: $('#height-out'),
+							pixel: $('#pixel-out'),
+							diagonal: $('#diagonal-out')
+						}
+					}
+				};
+
 				var $selectResult = $('#select-result');
-				var dimensions = new Dimensions(width, height);
+				var dimensions = new Dimensions(screen.width, screen.height);
 
-				selectUnit($selectResult, dimensions);
-
-				$selectResult.on('change', function () {
-					renderUnits(dimensions);
+				// events
+				dom.inputs.widthPx.on('keyup', function () {
+					dimensions.setWidthPx(this.value);
+					render();
 				});
 
-				$pixelWidth.on('keyup', function () {
-					dimensions.setWidthPx($pixelWidth.val());
-					$submit.trigger('click');
+				dom.inputs.heightPx.on('keyup', function () {
+					dimensions.setHeightPx(this.value);
+					render();
 				});
 
-				$pixelHeight.on('keyup', function () {
-					dimensions.setHeightPx($pixelHeight.val());
-					$submit.trigger('click');
-				});
-
-				$pixelSelect.on('change', function () {
-					var dimension = this.value.split('x');
-					dimensions.setWidthPx(dimension[0]).setHeightPx(dimension[1]);
-					$submit.trigger('click');
-				});
-
-				$diagonalIn.on('keyup', function () {
+				dom.inputs.diagonalIn.on('keyup', function () {
 					dimensions.setDiagonal(toFloat(this.value), dimensions.IN);
-					$submit.trigger('click');
+					render();
 				});
 
-				$cmWidth.on('keyup', function () {
-					dimensions.setWidth(toFloat(this.value));
-					$submit.trigger('click');
-				});
-
-				$cmHeight.on('keyup', function () {
-					dimensions.setHeight(toFloat(this.value));
-					$submit.trigger('click');
-				});
-
-				$diagonalCm.on('keyup', function () {
+				dom.inputs.diagonalCm.on('keyup', function () {
 					dimensions.setDiagonal(toFloat(this.value));
-					$submit.trigger('click');
+					render();
 				});
 
-				$submit.on('click', function (e) {
-					e.preventDefault();
-					fill($pixelHeight, dimensions.getHeightPx());
-					fill($pixelWidth, dimensions.getWidthPx());
-					fill($cmHeight, dimensions.getHeight());
-					fill($cmWidth, dimensions.getWidth());
-					fill($diagonalCm, dimensions.getDiagonal());
-					fill($diagonalIn, dimensions.getDiagonal(dimensions.IN));
-					render(dimensions);
+				dom.inputs.widthCm.on('keyup', function () {
+					dimensions.setWidth(toFloat(this.value));
+					render();
 				});
 
-				if ($pixelSelect.val(pixelValue).val() == pixelValue) {
-					$pixelSelect.trigger('change');
-				} else {
-					$submit.trigger('click');
+				dom.inputs.heightCm.on('keyup', function () {
+					dimensions.setHeight(toFloat(this.value));
+					render();
+				});
+
+				function selectUnit($element) {
+					var units = dimensions.getAllowedUnits();
+					for (var u in units) {
+						$element.append($('<option>').text('[' + u + ']').val(units[u]));
+					}
+					$element.val(dimensions.getUnit());
 				}
-				$diagonalIn.focus();
+
+				function renderUnits() {
+					var unit = $selectResult.val();
+					var unitStr = dimensions.getUnitName(unit);
+					var result = dom.results.dynamic;
+
+					function resultFill($element, value) {
+						$element.text(round(value, 2) + ' ' + unitStr);
+					}
+
+					resultFill(result.width, dimensions.getWidth(unit));
+					resultFill(result.height, dimensions.getHeight(unit));
+					resultFill(result.pixel, dimensions.getHeight(unit) / dimensions.getHeightPx());
+					resultFill(result.diagonal, dimensions.getDiagonal(unit));
+				}
+
+
+				function render() {
+					// fill inputs from dimensions object
+					function fillInput(element, value) {
+						var roundValue = round(value, 2);
+						if (value && element.val() != roundValue) {
+							element.val(roundValue);
+						}
+					}
+
+					var inputs = dom.inputs;
+					fillInput(inputs.widthPx, dimensions.getWidthPx());
+					fillInput(inputs.heightPx, dimensions.getHeightPx());
+					fillInput(inputs.widthCm, dimensions.getWidth());
+					fillInput(inputs.heightCm, dimensions.getHeight());
+					fillInput(inputs.diagonalCm, dimensions.getDiagonal());
+					fillInput(inputs.diagonalIn, dimensions.getDiagonal(dimensions.IN));
+
+					// render dynamic results
+					renderUnits();
+
+					// render static results
+					var heightInch = dimensions.getHeight(dimensions.IN);
+					var result = dom.results.static;
+					result.heightPx.text(dimensions.getHeightPx());
+					result.widthPx.text(dimensions.getWidthPx());
+					result.ppi.text(round(heightInch ? dimensions.getHeightPx() / heightInch : 0));
+				}
+
+
+				{ // init
+					// render select units in results
+					selectUnit($selectResult, dimensions);
+					$selectResult.on('change', function () {
+						renderUnits();
+					});
+
+					// final init
+					var pixelValue = dimensions.getResolution();
+					var $pixelSelect = $('#select-pixel');
+					$pixelSelect.on('change', function () {
+						var dimension = this.value.split('x');
+						dimensions.setWidthPx(dimension[0]).setHeightPx(dimension[1]);
+						render();
+					});
+
+					if ($pixelSelect.val(pixelValue).val() == pixelValue) {
+						$pixelSelect.trigger('change');
+					} else {
+						render();
+					}
+					dom.inputs.diagonalIn.focus();
+				}
 			});
 		</script>
 	</body>
