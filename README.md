@@ -1,2 +1,2 @@
 # Screen calculator
-[live view](https://cdn.rawgit.com/h4kuna/screen-calculator/master/index.html)
+[live view](https://rawgit.com/h4kuna/screen-calculator/master/index.html)
