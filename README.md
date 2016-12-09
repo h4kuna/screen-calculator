@@ -1,5 +1,5 @@
 # Screen calculator
-[live view](https://rawgit.com/h4kuna/screen-calculator/master/index.html)
+[live view](http://h4kuna.github.io/screen-calculator/)
 
 
 ## QR code with url for live view.
