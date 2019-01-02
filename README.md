@@ -1,6 +1,6 @@
 # Screen calculator
-[live view](http://h4kuna.github.io/screen-calculator/)
+[live view](http://h4kuna.github.io/screen-calculator/docs/)
 
 
 ## QR code with url for live view.
-![qr with url](https://raw.githubusercontent.com/h4kuna/screen-calculator/master/url-execute.svg)
+![qr with url](https://cdn.jsdelivr.net/gh/h4kuna/screen-calculator/url-execute.svg)
