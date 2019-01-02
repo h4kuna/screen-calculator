@@ -3,4 +3,4 @@
 
 
 ## QR code with url for live view.
-![qr with url](https://cdn.rawgit.com/h4kuna/screen-calculator/master/url-execute.svg)
+![qr with url](https://raw.githubusercontent.com/h4kuna/screen-calculator/master/url-execute.svg)
