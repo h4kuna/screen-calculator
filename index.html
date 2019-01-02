@@ -160,7 +160,10 @@
 			};
 			Dimensions.prototype.getResolution = function () {
 				return this.getWidthPx() + 'x' + this.getHeightPx();
-			}
+			};
+			Dimensions.prototype.getResolutionRotate = function () {
+				return this.getHeightPx() + 'x' + this.getWidthPx();
+			};
 			Dimensions.prototype._toZero = function (value) {
 				return isNaN(value) ? 0 : value;
 			};
@@ -311,6 +314,7 @@
 
 					// final init
 					var pixelValue = dimensions.getResolution();
+					var pixelValueRotate = dimensions.getResolutionRotate();
 					var $pixelSelect = $('#select-pixel');
 					$pixelSelect.on('change', function () {
 						var dimension = this.value.split('x');
@@ -318,7 +322,7 @@
 						render();
 					});
 
-					if ($pixelSelect.val(pixelValue).val() == pixelValue) {
+					if ($pixelSelect.val(pixelValue).val() === pixelValue || $pixelSelect.val(pixelValueRotate).val() === pixelValueRotate) {
 						$pixelSelect.trigger('change');
 					} else {
 						render();
