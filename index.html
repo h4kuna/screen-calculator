@@ -186,6 +186,10 @@
 				return value;
 			}
 
+			function countAbsoluteResolution(size) {
+				return size * window.devicePixelRatio;
+			}
+
 			$(function () {
 				var dom = {
 					inputs: {
@@ -212,7 +216,7 @@
 				};
 
 				var $selectResult = $('#select-result');
-				var dimensions = new Dimensions(screen.width, screen.height);
+				var dimensions = new Dimensions(countAbsoluteResolution(screen.width), countAbsoluteResolution(screen.height));
 
 				// events
 				dom.inputs.widthPx.on('keyup', function () {
